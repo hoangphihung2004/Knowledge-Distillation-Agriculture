@@ -14,8 +14,7 @@ class DepthwiseSeparable(nn.Module):
             nn.Conv2d(in_channels, hidden_channels, kernel_size=1, stride=1, padding=0, bias=False),
             nn.BatchNorm2d(hidden_channels),
             nn.ReLU(),
-            nn.Conv2d(hidden_channels, hidden_channels, kernel_size=3, stride=1, padding=1, groups=hidden_channels,
-                      bias=False),
+            nn.Conv2d(hidden_channels, hidden_channels, kernel_size=3, stride=1, padding=1, groups=hidden_channels, bias=False),
             nn.BatchNorm2d(hidden_channels),
             nn.ReLU(),
             nn.Conv2d(hidden_channels, out_channels, kernel_size=1, stride=1, padding=0, bias=False),
@@ -34,7 +33,6 @@ class DepthwiseSeparable(nn.Module):
         out += tmp
         return out
 
-
 class Block(nn.Module):
     def __init__(self, in_channels, growth_rate=16):
         super(Block, self).__init__()
@@ -44,8 +42,7 @@ class Block(nn.Module):
         self.conv1 = nn.Sequential(
             nn.BatchNorm2d(in_channels),
             nn.ReLU(),
-            nn.Conv2d(in_channels=in_channels, out_channels=inter_channels, kernel_size=1, stride=1, padding=0,
-                      bias=False)
+            nn.Conv2d(in_channels=in_channels, out_channels=inter_channels, kernel_size=1, stride=1, padding=0, bias=False)
         )
 
         self.depthwise_separable = nn.Sequential(
@@ -63,7 +60,6 @@ class Block(nn.Module):
 
         return torch.cat([tmp, out], dim=1)
 
-
 class Transition(nn.Module):
     def __init__(self, in_channels):
         super(Transition, self).__init__()
@@ -77,24 +73,20 @@ class Transition(nn.Module):
     def forward(self, x):
         return self.conv(x)
 
-
 class TeacherBranch(nn.Module):
     def __init__(self, in_channels, out_channels, num_classes):
         super(TeacherBranch, self).__init__()
 
         self.conv = nn.Sequential(
-            nn.Conv2d(in_channels=in_channels, out_channels=in_channels, kernel_size=3, stride=2, padding=1,
-                      groups=in_channels, bias=False),
+            nn.Conv2d(in_channels=in_channels, out_channels=in_channels, kernel_size=3, stride=2, padding=1, groups=in_channels, bias=False),
             nn.BatchNorm2d(in_channels),
             nn.ReLU(inplace=True),
-            nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=1, stride=1, padding=0,
-                      bias=False),
+            nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=1, stride=1, padding=0, bias=False),
             nn.BatchNorm2d(out_channels)
         )
 
         self.downsample = nn.Sequential(
-            nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=1, stride=2, padding=0,
-                      bias=False),
+            nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=1, stride=2, padding=0, bias=False),
             nn.BatchNorm2d(out_channels)
         )
 
@@ -109,14 +101,15 @@ class TeacherBranch(nn.Module):
     def forward(self, x):
         tmp = x
         out = self.conv(x)
+
         tmp = self.downsample(tmp)
         out += tmp
+
         out = self.avgpool(out)
         fea = out.view(out.size(0), -1)
         out = self.fc(fea)
 
         return fea, out
-
 
 class StudentBranch(nn.Module):
     def __init__(self, in_channels, num_classes):
@@ -124,18 +117,15 @@ class StudentBranch(nn.Module):
         self.conv = nn.Sequential(
             nn.BatchNorm2d(in_channels),
             nn.ReLU(),
-            nn.Conv2d(in_channels=in_channels, out_channels=in_channels, kernel_size=3, stride=1, padding=1,
-                      groups=in_channels, bias=False),
+            nn.Conv2d(in_channels=in_channels, out_channels=in_channels, kernel_size=3, stride=1, padding=1, groups=in_channels, bias=False),
             nn.BatchNorm2d(in_channels),
             nn.ReLU(),
-            nn.Conv2d(in_channels=in_channels, out_channels=in_channels, kernel_size=1, stride=1, padding=0,
-                      bias=False),
+            nn.Conv2d(in_channels=in_channels, out_channels=in_channels, kernel_size=1, stride=1, padding=0, bias=False),
             nn.BatchNorm2d(in_channels),
         )
 
         self.downsample = nn.Sequential(
-            nn.Conv2d(in_channels=in_channels, out_channels=in_channels, kernel_size=1, stride=1, padding=0,
-                      bias=False),
+            nn.Conv2d(in_channels=in_channels, out_channels=in_channels, kernel_size=1, stride=1, padding=0, bias=False),
             nn.BatchNorm2d(in_channels),
         )
 
@@ -150,14 +140,15 @@ class StudentBranch(nn.Module):
     def forward(self, x):
         tmp = x
         out = self.conv(x)
+
         tmp = self.downsample(tmp)
         out += tmp
+
         out = self.avgpool(out)
         fea = out.view(out.size(0), -1)
         out = self.fc(fea)
 
         return fea, out
-
 
 class Student(nn.Module):
     def __init__(self, num_classes, num_layers, growth_rate=16):
@@ -199,6 +190,7 @@ class Student(nn.Module):
         layers = []
 
         for i in range(number_block):
+
             layers.append(Block(in_channels=self.in_channels, growth_rate=self.growth_rate))
             self.in_channels += self.growth_rate
 
@@ -208,22 +200,18 @@ class Student(nn.Module):
         out = self.stem(x)
 
         out = self.layer1(out)
-
-        out = self.transition1(out)  # [1, 128, 28, 28]
+        out = self.transition1(out) # [1, 128, 28, 28]
 
         out = self.layer2(out)
-
-        out = self.transition2(out)  # [1, 224, 14, 14]
+        out = self.transition2(out) # [1, 224, 14, 14]
 
         out = self.layer3(out)
-
-        out = self.transition3(out)  # [1, 352, 7, 7]
+        out = self.transition3(out) # [1, 352, 7, 7]
 
         fea1, logit1 = self.branch(out)
 
-        out = self.layer4(out)  # [1, 512, 7, 7]
+        out = self.layer4(out) # [1, 512, 7, 7]
         out = self.avgpool(out)
-
         fea2 = out.view(out.size(0), -1)
 
         logit2 = self.fc(fea2)

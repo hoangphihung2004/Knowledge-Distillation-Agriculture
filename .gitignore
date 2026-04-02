@@ -4,3 +4,13 @@
 .images/
 .pre_trained_weights/
 .student_teacher_weights/
+
+# Ignore all files in the images folder
+images/*
+
+# Except for these specific image files
+!images/Coffee_leaf_dataset.jpg
+!images/Corn_leaf_dataset.jpg
+!images/Potato_leaf_dataset.jpg
+!images/Rice_leaf_dataset.jpg
+!images/Rice_seed_dataset.jpeg
